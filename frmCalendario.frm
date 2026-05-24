@@ -14,64 +14,356 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+'====================================================================================
+' frmCalendario
+'====================================================================================
+'
+' DATEPICKER TOTALMENTE PORTÁTIL
+'
+' RECURSOS:
+'   ? Todo código dentro do próprio frmCalendario
+'   ? Inicializa SEMPRE no mês/ano atual
+'   ? Retorno para:
+'       - Planilha
+'       - Outro UserForm
+'   ? Formatos:
+'       - CURTA   -> dd/mm/aaaa
+'       - EXTENSA -> dd de mês de aaaa
+'   ? Permite bloquear datas passadas
+'   ? Destaque visual:
+'       - finais de semana
+'       - dia atual
+'
+' OBJETOS NECESSÁRIOS:
+'   lblMesAno
+'   cmdAnterior
+'   cmdProximo
+'   cmdDia1 até cmdDia42
+'
+'====================================================================================
 
 Private DataAtual As Date
+Private pFormatoSaida As String
+Private pBloquearDatasPassadas As Boolean
+Private pCelulaDestino As Range
+Private pControleDestino As Object
+Private pOrigemPlanilha As Boolean
 
-Public FormularioOrigem As Object
-Public PlanilhaDestino As Worksheet
-Public CelulaDestino As Range
-' ==========================================
+'====================================================================================
 ' INICIALIZAÇÃO DO FORMULÁRIO
-' ==========================================
+'====================================================================================
+' IMPORTANTE:
+'   Sempre inicia no mês/ano atual.
+'====================================================================================
+
 Private Sub UserForm_Initialize()
     DataAtual = Date
-    CarregarCalendario
 End Sub
-' ==========================================
-' AVANÇAR MESES
-' ==========================================
+
+'====================================================================================
+' MÉTODO PÚBLICO
+'====================================================================================
+' ABRE O CALENDÁRIO PARA RETORNAR DATA À PLANILHA
+'
+' EXEMPLO:
+'
+' frmCalendario.AbrirParaPlanilha _
+'       Range("A1"), _
+'       "CURTA", _
+'       True
+'
+'====================================================================================
+
+Public Sub AbrirParaPlanilha( _
+                ByVal Destino As Range, _
+                Optional ByVal FormatoSaida As String = "CURTA", _
+                Optional ByVal BloquearDatasPassadas As Boolean = False)
+
+    Set pCelulaDestino = Destino
+
+    Set pControleDestino = Nothing
+
+    pOrigemPlanilha = True
+
+    pFormatoSaida = UCase(Trim(FormatoSaida))
+
+    pBloquearDatasPassadas = BloquearDatasPassadas
+
+    '======================================================
+    ' DEFINE DATA ATUAL
+    '======================================================
+
+    DataAtual = Date
+
+    '======================================================
+    ' CARREGA CALENDÁRIO
+    '======================================================
+
+    CarregarCalendario
+
+    Me.Show
+
+End Sub
+
+'====================================================================================
+' MÉTODO PÚBLICO
+'====================================================================================
+' ABRE O CALENDÁRIO PARA RETORNAR DATA A UM CONTROLE
+'
+' EXEMPLO:
+'
+' frmCalendario.AbrirParaFormulario _
+'       Me.txtData, _
+'       "EXTENSA", _
+'       False
+'
+'====================================================================================
+
+Public Sub AbrirParaFormulario( _
+                ByVal ControleDestino As Object, _
+                Optional ByVal FormatoSaida As String = "CURTA", _
+                Optional ByVal BloquearDatasPassadas As Boolean = False)
+
+    Set pControleDestino = ControleDestino
+
+    Set pCelulaDestino = Nothing
+
+    pOrigemPlanilha = False
+
+    pFormatoSaida = UCase(Trim(FormatoSaida))
+
+    pBloquearDatasPassadas = BloquearDatasPassadas
+
+    '======================================================
+    ' DEFINE DATA ATUAL
+    '======================================================
+
+    DataAtual = Date
+
+    '======================================================
+    ' AGORA O CALENDÁRIO É MONTADO
+    ' JÁ COM TODOS OS PARÂMETROS DEFINIDOS
+    '======================================================
+
+    CarregarCalendario
+
+    Me.Show
+
+End Sub
+
+'====================================================================================
+' AVANÇA MÊS
+'====================================================================================
+
 Private Sub cmdProximo_Click()
+
     DataAtual = DateAdd("m", 1, DataAtual)
+
     CarregarCalendario
+
 End Sub
-' ==========================================
-' RETROCEDER MESES
-' ==========================================
+
+'====================================================================================
+' RETORNA MÊS
+'====================================================================================
+
 Private Sub cmdAnterior_Click()
+
     DataAtual = DateAdd("m", -1, DataAtual)
+
     CarregarCalendario
+
 End Sub
-' ==========================================
-' SELEÇÃO DE DATAS | ROTINA DE SELEÇÃO
-' ==========================================
-Private Sub SelecionarData(btn As MSForms.CommandButton)
 
-    Dim DataEscolhida As Date
+'====================================================================================
+' CARREGA CALENDÁRIO
+'====================================================================================
 
-    If btn.Caption = "" Then Exit Sub
+Private Sub CarregarCalendario()
 
-    DataEscolhida = DateSerial(Year(DataAtual), Month(DataAtual), CInt(btn.Caption))
+    Dim PrimeiroDia As Date
 
-    ' =====================================
-    ' RETORNO PARA USERFORM
-    ' =====================================
-    If Not FormularioOrigem Is Nothing Then
+    Dim Inicio As Long
 
-        If TextBoxValida Then
-            FormularioOrigem.Controls("txt_DatePickerValue").Value = Format(DataEscolhida, "dd/mm/yyyy")
+    Dim DiasMes As Long
+
+    Dim i As Long
+
+    Dim Botao As MSForms.CommandButton
+
+    Dim DataBotao As Date
+
+    Dim PosicaoBotao As Long
+
+    '==========================================================
+    ' GARANTE PRIMEIRO DIA DO MÊS
+    '==========================================================
+
+    PrimeiroDia = DateSerial(Year(DataAtual), Month(DataAtual), 1)
+
+    '==========================================================
+    ' TÍTULO
+    '==========================================================
+
+    lblMesAno.Caption = _
+        UCase(Format(PrimeiroDia, "mmmm yyyy"))
+
+    '==========================================================
+    ' POSIÇÃO INICIAL
+    '==========================================================
+
+    Inicio = Weekday(PrimeiroDia, vbSunday)
+
+    '==========================================================
+    ' TOTAL DE DIAS DO MÊS
+    '==========================================================
+
+    DiasMes = Day(DateSerial(Year(PrimeiroDia), _
+                             Month(PrimeiroDia) + 1, 0))
+
+    '==========================================================
+    ' LIMPA BOTÕES
+    '==========================================================
+
+    For i = 1 To 42
+
+        Set Botao = Me.Controls("cmdDia" & i)
+
+        With Botao
+
+            .Caption = ""
+
+            .Enabled = False
+
+            .Tag = ""
+
+            .BackColor = RGB(255, 255, 255)
+
+            .ForeColor = RGB(0, 0, 0)
+
+            .Font.Bold = False
+
+        End With
+
+    Next i
+
+    '==========================================================
+    ' PREENCHE DIAS
+    '==========================================================
+
+    For i = 1 To DiasMes
+
+        PosicaoBotao = Inicio + i - 1
+
+        Set Botao = Me.Controls("cmdDia" & PosicaoBotao)
+
+        DataBotao = DateSerial(Year(DataAtual), Month(DataAtual), i)
+
+        With Botao
+
+            .Caption = i
+
+            .Tag = DataBotao
+
+            .Enabled = True
+
+            '==================================================
+            ' BLOQUEIO DE DATAS PASSADAS
+            '==================================================
+
+            If pBloquearDatasPassadas Then
+
+                If DataBotao < Date Then
+
+                    .Enabled = False
+
+                End If
+
+            End If
+
+            '==================================================
+            ' FINAIS DE SEMANA
+            '==================================================
+
+            If Weekday(DataBotao, vbSunday) = 1 _
+            Or Weekday(DataBotao, vbSunday) = 7 Then
+
+                .BackColor = RGB(188, 230, 254)
+
+                .ForeColor = RGB(2, 32, 121)
+
+                .Font.Bold = True
+
+            End If
+
+            '==================================================
+            ' DIA ATUAL
+            '==================================================
+
+            If DataBotao = Date Then
+
+                .BackColor = RGB(190, 248, 211)
+
+                .ForeColor = RGB(242, 30, 30)
+
+                .Font.Bold = True
+
+            End If
+
+        End With
+
+    Next i
+
+End Sub
+
+'====================================================================================
+' FORMATA DATA
+'====================================================================================
+
+Private Function FormatarData(ByVal DataValor As Date) As String
+
+    Select Case pFormatoSaida
+
+        Case "EXTENSA"
+
+            FormatarData = _
+                Day(DataValor) & _
+                " de " & _
+                LCase(Format(DataValor, "mmmm")) & _
+                " de " & _
+                Year(DataValor)
+
+        Case Else
+
+            FormatarData = Format(DataValor, "dd/mm/yyyy")
+
+    End Select
+
+End Function
+
+'====================================================================================
+' RETORNA DATA AO DESTINO
+'====================================================================================
+
+Private Sub RetornarData(ByVal DataEscolhida As Date)
+
+    Dim TextoData As String
+
+    TextoData = FormatarData(DataEscolhida)
+
+    If pOrigemPlanilha Then
+
+        If Not pCelulaDestino Is Nothing Then
+
+            pCelulaDestino.Value = TextoData
+
         End If
 
-    End If
+    Else
 
-    ' =====================================
-    ' RETORNO PARA PLANILHA
-    ' =====================================
-    If Not PlanilhaDestino Is Nothing Then
+        If Not pControleDestino Is Nothing Then
 
-        If Not CelulaDestino Is Nothing Then
-
-            CelulaDestino.Value = DataEscolhida
-            CelulaDestino.NumberFormat = "dd/mm/yyyy"
+            pControleDestino.Value = TextoData
 
         End If
 
@@ -80,286 +372,72 @@ Private Sub SelecionarData(btn As MSForms.CommandButton)
     Unload Me
 
 End Sub
-Private Sub cmdDia1_Click()
-    SelecionarData cmdDia1
-End Sub
-Private Sub cmdDia2_Click()
-    SelecionarData cmdDia2
-End Sub
-Private Sub cmdDia3_Click()
-    SelecionarData cmdDia3
-End Sub
-Private Sub cmdDia4_Click()
-    SelecionarData cmdDia4
-End Sub
-Private Sub cmdDia5_Click()
-    SelecionarData cmdDia5
-End Sub
-Private Sub cmdDia6_Click()
-    SelecionarData cmdDia6
-End Sub
-Private Sub cmdDia7_Click()
-    SelecionarData cmdDia7
-End Sub
-Private Sub cmdDia8_Click()
-    SelecionarData cmdDia8
-End Sub
-Private Sub cmdDia9_Click()
-    SelecionarData cmdDia9
-End Sub
-Private Sub cmdDia10_Click()
-    SelecionarData cmdDia10
-End Sub
-Private Sub cmdDia11_Click()
-    SelecionarData cmdDia11
-End Sub
-Private Sub cmdDia12_Click()
-    SelecionarData cmdDia12
-End Sub
-Private Sub cmdDia13_Click()
-    SelecionarData cmdDia13
-End Sub
-Private Sub cmdDia14_Click()
-    SelecionarData cmdDia14
-End Sub
-Private Sub cmdDia15_Click()
-    SelecionarData cmdDia15
-End Sub
-Private Sub cmdDia16_Click()
-    SelecionarData cmdDia16
-End Sub
-Private Sub cmdDia17_Click()
-    SelecionarData cmdDia17
-End Sub
-Private Sub cmdDia18_Click()
-    SelecionarData cmdDia18
-End Sub
-Private Sub cmdDia19_Click()
-    SelecionarData cmdDia19
-End Sub
-Private Sub cmdDia20_Click()
-    SelecionarData cmdDia20
-End Sub
-Private Sub cmdDia21_Click()
-    SelecionarData cmdDia21
-End Sub
-Private Sub cmdDia22_Click()
-    SelecionarData cmdDia22
-End Sub
-Private Sub cmdDia23_Click()
-    SelecionarData cmdDia23
-End Sub
-Private Sub cmdDia24_Click()
-    SelecionarData cmdDia24
-End Sub
-Private Sub cmdDia25_Click()
-    SelecionarData cmdDia25
-End Sub
-Private Sub cmdDia26_Click()
-    SelecionarData cmdDia26
-End Sub
-Private Sub cmdDia27_Click()
-    SelecionarData cmdDia27
-End Sub
-Private Sub cmdDia28_Click()
-    SelecionarData cmdDia28
-End Sub
-Private Sub cmdDia29_Click()
-    SelecionarData cmdDia29
-End Sub
-Private Sub cmdDia30_Click()
-    SelecionarData cmdDia30
-End Sub
-Private Sub cmdDia31_Click()
-    SelecionarData cmdDia31
-End Sub
-Private Sub cmdDia32_Click()
-    SelecionarData cmdDia32
-End Sub
-Private Sub cmdDia33_Click()
-    SelecionarData cmdDia33
-End Sub
-Private Sub cmdDia34_Click()
-    SelecionarData cmdDia34
-End Sub
-Private Sub cmdDia35_Click()
-    SelecionarData cmdDia35
-End Sub
-Private Sub cmdDia36_Click()
-    SelecionarData cmdDia36
-End Sub
-Private Sub cmdDia37_Click()
-    SelecionarData cmdDia37
-End Sub
-Private Sub cmdDia38_Click()
-    SelecionarData cmdDia38
-End Sub
-Private Sub cmdDia39_Click()
-    SelecionarData cmdDia39
-End Sub
-Private Sub cmdDia40_Click()
-    SelecionarData cmdDia40
-End Sub
-Private Sub cmdDia41_Click()
-    SelecionarData cmdDia41
-End Sub
-Private Sub cmdDia42_Click()
-    SelecionarData cmdDia42
-End Sub
-' ==========================================
-' CARREGA DADOS INICIAIS NO CALENDÁRIO
-' ==========================================
-Private Sub CarregarCalendario()
 
-    Dim PrimeiroDia As Date
-    Dim Inicio As Integer
-    Dim DiasMes As Integer
-    Dim i As Integer
-    Dim Botao As MSForms.CommandButton
-    Dim DataSelecionada As Date
+'====================================================================================
+' ROTINA CENTRAL DE SELEÇÃO
+'====================================================================================
 
-    lblMesAno.Caption = Format(DataAtual, "mmmm yyyy")
+Private Sub SelecionarData(btn As MSForms.CommandButton)
 
-    PrimeiroDia = DateSerial(Year(DataAtual), Month(DataAtual), 1)
+    Dim DataEscolhida As Date
 
-    Inicio = Weekday(PrimeiroDia, vbSunday)
+    If btn.Caption = "" Then Exit Sub
 
-    DiasMes = Day(DateSerial(Year(DataAtual), Month(DataAtual) + 1, 0))
+    If btn.Enabled = False Then Exit Sub
 
-    ' Limpa os botões
-    For i = 1 To 42
+    DataEscolhida = DateSerial( _
+                    Year(DataAtual), _
+                    Month(DataAtual), _
+                    CLng(btn.Caption))
 
-        Set Botao = Me.Controls("cmdDia" & i)
-
-        Botao.Caption = ""
-        Botao.Enabled = False
-        Botao.BackColor = vbButtonFace
-        Botao.ForeColor = vbBlack
-
-    Next i
-
-    ' Preenche os dias
-    For i = 1 To DiasMes
-
-        Set Botao = Me.Controls("cmdDia" & (Inicio + i - 1))
-
-        Botao.Caption = i
-        Botao.Enabled = True
-
-        DataSelecionada = DateSerial(Year(DataAtual), Month(DataAtual), i)
-
-        ' DESTACAR HOJE
-        If DataSelecionada = Date Then
-            Botao.BackColor = vbYellow
-        End If
-
-        ' FINAIS DE SEMANA EM VERMELHO
-        If Weekday(DataSelecionada, vbSunday) = 1 _
-        Or Weekday(DataSelecionada, vbSunday) = 7 Then
-
-            Botao.ForeColor = vbRed
-
-        End If
-
-        ' BLOQUEAR DATAS PASSADAS
-        If DataSelecionada < Date Then
-            Botao.Enabled = False
-            Botao.ForeColor = RGB(150, 150, 150)
-        End If
-
-    Next i
-
-End Sub
-' ==========================================
-' CRIA VALIDAÇÃO DA TEXTBOX
-' ==========================================
-Private Function TextBoxValida() As Boolean
-
-    Dim ctrl As Control
-
-    On Error GoTo TrataErro
-
-    Set ctrl = FormularioOrigem.Controls("txt_DatePickerValue")
-
-    If ctrl Is Nothing Then
-
-        MsgBox "O formulário chamador não possui a TextBox obrigatória:" _
-                & vbCrLf & _
-                "txt_DatePickerValue", vbCritical
-
-        TextBoxValida = False
-        Exit Function
-
-    End If
-
-    TextBoxValida = True
-    Exit Function
-
-TrataErro:
-
-    MsgBox "Erro ao localizar a TextBox 'txt_datepicked'." & vbCrLf & _
-           "Verifique se o controle existe no formulário.", vbCritical
-
-    TextBoxValida = False
-
-End Function
-
-
-' ==========================================
-' MACRO PARA ABRIR CALENDÁRIO NA PLANILHA
-' ==========================================
-Sub AbrirCalendario()
-
-    Set frmCalendario.CelulaDestino = ActiveCell
-
-    frmCalendario.Show
-
-End Sub
-' ==========================================
-' MÉTODO PARA ABRIR NO USERFORM
-' ==========================================
-Public Sub AbrirNoFormulario(frm As Object)
-
-    Set FormularioOrigem = frm
-
-    Set PlanilhaDestino = Nothing
-    Set CelulaDestino = Nothing
-
-    Me.Show
-
-End Sub
-' ==========================================
-' MÉTODO PARA ABRIR NA PLANILHA
-' ==========================================
-Public Sub AbrirNaPlanilha(ws As Worksheet, cel As Range)
-
-    Set PlanilhaDestino = ws
-    Set CelulaDestino = cel
-
-    Set FormularioOrigem = Nothing
-
-    Me.Show
+    RetornarData DataEscolhida
 
 End Sub
 
-' ==========================================
-' ==========================================
-' ==========================================
-'COMO USAR NO USERFORM
-'No formulário chamador:
-'O formulário precisa possuir uma TextBox com: (Name) => txt_DatePickerValue
+'====================================================================================
+' EVENTOS DOS BOTÕES
+'====================================================================================
 
-'Private Sub txtData_Enter()
-'    frmCalendario.AbrirNoFormulario Me
-'End Sub
+Private Sub cmdDia1_Click(): SelecionarData cmdDia1: End Sub
+Private Sub cmdDia2_Click(): SelecionarData cmdDia2: End Sub
+Private Sub cmdDia3_Click(): SelecionarData cmdDia3: End Sub
+Private Sub cmdDia4_Click(): SelecionarData cmdDia4: End Sub
+Private Sub cmdDia5_Click(): SelecionarData cmdDia5: End Sub
+Private Sub cmdDia6_Click(): SelecionarData cmdDia6: End Sub
+Private Sub cmdDia7_Click(): SelecionarData cmdDia7: End Sub
+Private Sub cmdDia8_Click(): SelecionarData cmdDia8: End Sub
+Private Sub cmdDia9_Click(): SelecionarData cmdDia9: End Sub
+Private Sub cmdDia10_Click(): SelecionarData cmdDia10: End Sub
+Private Sub cmdDia11_Click(): SelecionarData cmdDia11: End Sub
+Private Sub cmdDia12_Click(): SelecionarData cmdDia12: End Sub
+Private Sub cmdDia13_Click(): SelecionarData cmdDia13: End Sub
+Private Sub cmdDia14_Click(): SelecionarData cmdDia14: End Sub
+Private Sub cmdDia15_Click(): SelecionarData cmdDia15: End Sub
+Private Sub cmdDia16_Click(): SelecionarData cmdDia16: End Sub
+Private Sub cmdDia17_Click(): SelecionarData cmdDia17: End Sub
+Private Sub cmdDia18_Click(): SelecionarData cmdDia18: End Sub
+Private Sub cmdDia19_Click(): SelecionarData cmdDia19: End Sub
+Private Sub cmdDia20_Click(): SelecionarData cmdDia20: End Sub
+Private Sub cmdDia21_Click(): SelecionarData cmdDia21: End Sub
+Private Sub cmdDia22_Click(): SelecionarData cmdDia22: End Sub
+Private Sub cmdDia23_Click(): SelecionarData cmdDia23: End Sub
+Private Sub cmdDia24_Click(): SelecionarData cmdDia24: End Sub
+Private Sub cmdDia25_Click(): SelecionarData cmdDia25: End Sub
+Private Sub cmdDia26_Click(): SelecionarData cmdDia26: End Sub
+Private Sub cmdDia27_Click(): SelecionarData cmdDia27: End Sub
+Private Sub cmdDia28_Click(): SelecionarData cmdDia28: End Sub
+Private Sub cmdDia29_Click(): SelecionarData cmdDia29: End Sub
+Private Sub cmdDia30_Click(): SelecionarData cmdDia30: End Sub
+Private Sub cmdDia31_Click(): SelecionarData cmdDia31: End Sub
+Private Sub cmdDia32_Click(): SelecionarData cmdDia32: End Sub
+Private Sub cmdDia33_Click(): SelecionarData cmdDia33: End Sub
+Private Sub cmdDia34_Click(): SelecionarData cmdDia34: End Sub
+Private Sub cmdDia35_Click(): SelecionarData cmdDia35: End Sub
+Private Sub cmdDia36_Click(): SelecionarData cmdDia36: End Sub
+Private Sub cmdDia37_Click(): SelecionarData cmdDia37: End Sub
+Private Sub cmdDia38_Click(): SelecionarData cmdDia38: End Sub
+Private Sub cmdDia39_Click(): SelecionarData cmdDia39: End Sub
+Private Sub cmdDia40_Click(): SelecionarData cmdDia40: End Sub
+Private Sub cmdDia41_Click(): SelecionarData cmdDia41: End Sub
+Private Sub cmdDia42_Click(): SelecionarData cmdDia42: End Sub
 
-' ==========================================
-' ==========================================
-' ==========================================
-'COMO USAR NA PLANILHA
-'Exemplo:
-'Sub AbrirCalendarioNaCelula()
-'    frmCalendario.AbrirNaPlanilha _
-'        ThisWorkbook.Sheets("Agenda"), _
-'        ThisWorkbook.Sheets("Agenda").Range("B5")
-'End Sub
