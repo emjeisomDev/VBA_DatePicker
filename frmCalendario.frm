@@ -16,7 +16,10 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private DataAtual As Date
+
 Public FormularioOrigem As Object
+Public PlanilhaDestino As Worksheet
+Public CelulaDestino As Range
 ' ==========================================
 ' INICIALIZAÇÃO DO FORMULÁRIO
 ' ==========================================
@@ -47,22 +50,32 @@ Private Sub SelecionarData(btn As MSForms.CommandButton)
 
     If btn.Caption = "" Then Exit Sub
 
-    If FormularioOrigem Is Nothing Then
+    DataEscolhida = DateSerial(Year(DataAtual), Month(DataAtual), CInt(btn.Caption))
 
-        MsgBox "Nenhum formulário de origem foi informado.", vbCritical
-        Exit Sub
+    ' =====================================
+    ' RETORNO PARA USERFORM
+    ' =====================================
+    If Not FormularioOrigem Is Nothing Then
+
+        If TextBoxValida Then
+            FormularioOrigem.Controls("txt_DatePickerValue").Value = Format(DataEscolhida, "dd/mm/yyyy")
+        End If
 
     End If
 
-    If Not TextBoxValida Then Exit Sub
+    ' =====================================
+    ' RETORNO PARA PLANILHA
+    ' =====================================
+    If Not PlanilhaDestino Is Nothing Then
 
-    DataEscolhida = DateSerial( _
-                    Year(DataAtual), _
-                    Month(DataAtual), _
-                    CInt(btn.Caption))
+        If Not CelulaDestino Is Nothing Then
 
-    FormularioOrigem.Controls("txt_datepicked").Value = _
-        Format(DataEscolhida, "dd/mm/yyyy")
+            CelulaDestino.Value = DataEscolhida
+            CelulaDestino.NumberFormat = "dd/mm/yyyy"
+
+        End If
+
+    End If
 
     Unload Me
 
@@ -71,127 +84,127 @@ Private Sub cmdDia1_Click()
     SelecionarData cmdDia1
 End Sub
 Private Sub cmdDia2_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia2
 End Sub
 Private Sub cmdDia3_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia3
 End Sub
 Private Sub cmdDia4_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia4
 End Sub
 Private Sub cmdDia5_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia5
 End Sub
 Private Sub cmdDia6_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia6
 End Sub
 Private Sub cmdDia7_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia7
 End Sub
 Private Sub cmdDia8_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia8
 End Sub
 Private Sub cmdDia9_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia9
 End Sub
 Private Sub cmdDia10_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia10
 End Sub
 Private Sub cmdDia11_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia11
 End Sub
 Private Sub cmdDia12_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia12
 End Sub
 Private Sub cmdDia13_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia13
 End Sub
 Private Sub cmdDia14_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia14
 End Sub
 Private Sub cmdDia15_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia15
 End Sub
 Private Sub cmdDia16_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia16
 End Sub
 Private Sub cmdDia17_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia17
 End Sub
 Private Sub cmdDia18_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia18
 End Sub
 Private Sub cmdDia19_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia19
 End Sub
 Private Sub cmdDia20_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia20
 End Sub
 Private Sub cmdDia21_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia21
 End Sub
 Private Sub cmdDia22_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia22
 End Sub
 Private Sub cmdDia23_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia23
 End Sub
 Private Sub cmdDia24_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia24
 End Sub
 Private Sub cmdDia25_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia25
 End Sub
 Private Sub cmdDia26_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia26
 End Sub
 Private Sub cmdDia27_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia27
 End Sub
 Private Sub cmdDia28_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia28
 End Sub
 Private Sub cmdDia29_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia29
 End Sub
 Private Sub cmdDia30_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia30
 End Sub
 Private Sub cmdDia31_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia31
 End Sub
 Private Sub cmdDia32_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia32
 End Sub
 Private Sub cmdDia33_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia33
 End Sub
 Private Sub cmdDia34_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia34
 End Sub
 Private Sub cmdDia35_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia35
 End Sub
 Private Sub cmdDia36_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia36
 End Sub
 Private Sub cmdDia37_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia37
 End Sub
 Private Sub cmdDia38_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia38
 End Sub
 Private Sub cmdDia39_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia39
 End Sub
 Private Sub cmdDia40_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia40
 End Sub
 Private Sub cmdDia41_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia41
 End Sub
 Private Sub cmdDia42_Click()
-    SelecionarData cmdDia1
+    SelecionarData cmdDia42
 End Sub
 ' ==========================================
 ' CARREGA DADOS INICIAIS NO CALENDÁRIO
@@ -266,12 +279,13 @@ Private Function TextBoxValida() As Boolean
 
     On Error GoTo TrataErro
 
-    Set ctrl = FormularioOrigem.Controls("txt_datepicked")
+    Set ctrl = FormularioOrigem.Controls("txt_DatePickerValue")
 
     If ctrl Is Nothing Then
 
-        MsgBox "O formulário chamador não possui a TextBox obrigatória:" & vbCrLf & _
-               "txt_datepicked", vbCritical
+        MsgBox "O formulário chamador não possui a TextBox obrigatória:" _
+                & vbCrLf & _
+                "txt_DatePickerValue", vbCritical
 
         TextBoxValida = False
         Exit Function
@@ -301,3 +315,51 @@ Sub AbrirCalendario()
     frmCalendario.Show
 
 End Sub
+' ==========================================
+' MÉTODO PARA ABRIR NO USERFORM
+' ==========================================
+Public Sub AbrirNoFormulario(frm As Object)
+
+    Set FormularioOrigem = frm
+
+    Set PlanilhaDestino = Nothing
+    Set CelulaDestino = Nothing
+
+    Me.Show
+
+End Sub
+' ==========================================
+' MÉTODO PARA ABRIR NA PLANILHA
+' ==========================================
+Public Sub AbrirNaPlanilha(ws As Worksheet, cel As Range)
+
+    Set PlanilhaDestino = ws
+    Set CelulaDestino = cel
+
+    Set FormularioOrigem = Nothing
+
+    Me.Show
+
+End Sub
+
+' ==========================================
+' ==========================================
+' ==========================================
+'COMO USAR NO USERFORM
+'No formulário chamador:
+'O formulário precisa possuir uma TextBox com: (Name) => txt_DatePickerValue
+
+'Private Sub txtData_Enter()
+'    frmCalendario.AbrirNoFormulario Me
+'End Sub
+
+' ==========================================
+' ==========================================
+' ==========================================
+'COMO USAR NA PLANILHA
+'Exemplo:
+'Sub AbrirCalendarioNaCelula()
+'    frmCalendario.AbrirNaPlanilha _
+'        ThisWorkbook.Sheets("Agenda"), _
+'        ThisWorkbook.Sheets("Agenda").Range("B5")
+'End Sub
